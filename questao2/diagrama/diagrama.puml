@@ -1,0 +1,182 @@
+@startuml
+skinparam classAttributeIconSize 0
+title Questão 2 - Casa de Leilões (Observer + Strategy + Decorator)
+
+interface Interessado <<Observer>> {
+  + notificarLance(lote : Lote, valor : double) : void
+}
+
+class Participante <<ConcreteObserver>> {
+  - nome : String
+  + getNome() : String
+  + notificarLance(lote : Lote, valor : double) : void
+}
+
+class PainelLeiloeiro <<ConcreteObserver>> {
+  - maiorLance : double
+  - totalLances : int
+  + notificarLance(lote : Lote, valor : double) : void
+}
+
+class Auditor <<ConcreteObserver>> {
+  - registros : List~String~
+  + notificarLance(lote : Lote, valor : double) : void
+  + imprimirRegistros() : void
+}
+
+class Lote <<Subject>> {
+  - nome : String
+  - categoria : String
+  - precoInicial : double
+  - precoReserva : double
+  - lanceAtual : double
+  - interessados : List~Interessado~
+  - lances : List~Lance~
+  - comissao : Comissao
+  - encerrado : boolean
+  + adicionarInteressado(interessado : Interessado) : void
+  + removerInteressado(interessado : Interessado) : void
+  + darLance(participante : Participante, valor : double) : boolean
+  + trocarComissao(novaComissao : Comissao) : void
+  + getComissao() : Comissao
+  + encerrar() : void
+  + getNome() : String
+  + getCategoria() : String
+  + getLanceAtual() : double
+  + getPrecoReserva() : double
+  + isEncerrado() : boolean
+  + getLances() : List~Lance~
+}
+
+class Lance {
+  - participante : Participante
+  - valor : double
+  - dataHora : LocalDateTime
+}
+
+interface Comissao <<Strategy>> {
+  + calcular(valorVenda : double) : double
+}
+
+class ComissaoArte <<ConcreteStrategy>> {
+  + calcular(valorVenda : double) : double
+}
+
+class ComissaoVeiculos <<ConcreteStrategy>> {
+  + calcular(valorVenda : double) : double
+}
+
+class ComissaoImoveis <<ConcreteStrategy>> {
+  + calcular(valorVenda : double) : double
+}
+
+class ComissaoEletronicos <<ConcreteStrategy>> {
+  + calcular(valorVenda : double) : double
+}
+
+interface ServicoAdicional <<Component>> {
+  + getDescricao() : String
+  + getCusto() : double
+  + getValorVenda() : double
+}
+
+class VendaBase <<ConcreteComponent>> {
+  - valorVenda : double
+  + getDescricao() : String
+  + getCusto() : double
+  + getValorVenda() : double
+}
+
+abstract class ServicoDecorator <<Decorator>> {
+  # servicoInterno : ServicoAdicional
+  + getValorVenda() : double
+}
+
+class SeguroTransporte <<ConcreteDecorator>> {
+  + getDescricao() : String
+  + getCusto() : double
+}
+
+class CertificadoAutenticidade <<ConcreteDecorator>> {
+  + getDescricao() : String
+  + getCusto() : double
+}
+
+class EmbalagemEspecial <<ConcreteDecorator>> {
+  + getDescricao() : String
+  + getCusto() : double
+}
+
+class EntregaExpressa <<ConcreteDecorator>> {
+  + getDescricao() : String
+  + getCusto() : double
+}
+
+class Fatura {
+  + {static} imprimir(lote : Lote, servico : ServicoAdicional) : void
+}
+
+class AcertoVendedor {
+  + {static} imprimir(lote : Lote) : void
+}
+
+class Main {
+  + {static} main(args : String[]) : void
+}
+
+Interessado <|.. Participante
+Interessado <|.. PainelLeiloeiro
+Interessado <|.. Auditor
+Lote o--> Interessado : interessados
+Lote o--> Lance : lances
+Lance --> Participante
+
+Comissao <|.. ComissaoArte
+Comissao <|.. ComissaoVeiculos
+Comissao <|.. ComissaoImoveis
+Comissao <|.. ComissaoEletronicos
+Lote o--> Comissao : comissao
+
+ServicoAdicional <|.. VendaBase
+ServicoAdicional <|.. ServicoDecorator
+ServicoDecorator o--> ServicoAdicional : servicoInterno
+ServicoDecorator <|-- SeguroTransporte
+ServicoDecorator <|-- CertificadoAutenticidade
+ServicoDecorator <|-- EmbalagemEspecial
+ServicoDecorator <|-- EntregaExpressa
+
+Fatura ..> Lote
+Fatura ..> ServicoAdicional
+AcertoVendedor ..> Lote
+AcertoVendedor ..> Comissao
+
+Main ..> Lote
+Main ..> Participante
+Main ..> PainelLeiloeiro
+Main ..> Auditor
+Main ..> ComissaoArte
+Main ..> ComissaoVeiculos
+Main ..> ComissaoEletronicos
+Main ..> VendaBase
+Main ..> SeguroTransporte
+Main ..> CertificadoAutenticidade
+Main ..> EmbalagemEspecial
+Main ..> Fatura
+Main ..> AcertoVendedor
+
+note right of Lote
+  Notifica todos os interessados
+  exceto quem deu o lance.
+end note
+
+note bottom of Comissao
+  trocarComissao() substitui a estratégia
+  em tempo de execução, sem recriar o lote.
+end note
+
+note bottom of ServicoDecorator
+  Serviços são combinados em tempo de execução;
+  não existem classes de combinação.
+end note
+
+@enduml
